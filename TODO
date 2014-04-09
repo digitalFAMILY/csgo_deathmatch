@@ -1,0 +1,12 @@
+TODO
+====
+
+* Add options to control the frequency of gun menu messages.
+* Add option to change chat triggers for the gun menu.
+* Add support for per-map configuration files.
+* Add option for instant reload on kill.
+* Add option to balance gun access, so each team can only have <gun limit> / 2.
+* Add option to disable removal of map weapons (preferably without sdkhooks).
+* Change from timer based weapon removal to removal on death (preferably without sdkhooks).
+* Add HP per kill assist option (dm_hp_kill_assist).
+* Update de_nuke and de_nuke_se spawn point files.

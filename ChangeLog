@@ -1,0 +1,56 @@
+ChangeLog
+=========
+
+1.5 (15/10/2012)
+----------------
+* Added cvar to enable/disable respawning (dm_respawning).
+* Added cvar to change gun menu behaviour (dm_gun_menu_mode).
+* The radar HUD element is now completely hidden in FFA mode.
+* Fixed bug that in rare circumstances would prevent C4 from being removed.
+
+1.4.2 (29/09/2012)
+----------------
+* Fixed bug where committing suicide in FFA mode would earn a kill point.
+
+1.4.1 (28/09/2012)
+----------------
+* Fixed minor error (client index check).
+
+1.4 (28/09/2012)
+----------------
+* Added free for all mode (dm_free_for_all).
+* Added ragdoll removal on client disconnect and team spectator join.
+* Added HP per knife kill option (dm_hp_knife).
+* Added armour option (dm_armour).
+* Added cvar for zeus (dm_zeus).
+* Changed grenade options in the configuration file from "yes" and "no" to numbers, enabling multiple grenades.
+* Added grenade cvars (dm_nades_incendiary, dm_nades_decoy, dm_nades_flashbang, dm_nades_he, dm_nades_smoke).
+* Added starting HP (dm_hp_start) and maximum HP (dm_hp_max) options.
+* Added option to remove radio text when throwing grenades (dm_nade_messages).
+* Fixed suppression of cash award text messages.
+
+1.3 (06/09/2012)
+----------------
+* Removed weapon menu names from the configuration file.
+* Added weapon limits in the configuration file ("-1" means unlimited).
+* Added taser option in the configuration file.
+* Added grenade options in the configuration file.
+
+1.2 (25/07/2012)
+----------------
+* The round no longer ends due to a team being killed, even with 1 vs 1.
+* Player cash is now set to 0, and cash awards are disabled.
+* Added HP per kill (dm_hp_kill) and HP per headshot kill (dm_hp_hs).
+* Added HP messages (dm_hp_messages).
+* Bug fixed where spawn protection was not removed properly on plugin unload/disable.
+* Updated config file (deathmatch.ini).
+
+1.1 (14/07/2012)
+----------------
+* Added distance based spawning option (dm_spawn_distance).
+* Added spawn statistics (dm_stats, and dm_reset_stats).
+* Changed "[DM]" in messages to be green to stand out more.
+
+1.0 (08/07/2012)
+----------------
+* Initial release.
