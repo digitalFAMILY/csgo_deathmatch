@@ -17,21 +17,6 @@ There are two key differences between this and other DM plugins:
 1) Everything required for DM is packaged into a single plugin for ease of use.
 2) By default, this DM plugin uses line of sight spawning, to prevent players from spawning directly infront of or behind enemies, giving both players a better chance, and significantly reducing spawn killing. Distance based spawning is also available.
 
-Description
------------
-This plugin enables deathmatch style gameplay. It has the following components:
-Spawn Point Editor - Allows admins to add or modify spawn points for each map.
-Objectives Removal - Disables bomb sites, and removes C4 and hostages.
-Respawning - Respawns players when they die.
-Spawn Protection - Protects spawning players from enemy fire for a limited period of time.
-Gun Menu - Allows players to select primary and or secondary weapons.
-Weapon Removal - Removes weapons that are on the ground or dropped.
-Replenish Ammo - Gives players ammo to prevent them running out.
-There are two key differences between this and other DM plugins:
-1) Everything required for DM is packaged into a single plugin for ease of use.
-2) By default, this DM plugin uses line of sight spawning, to prevent players from spawning directly infront of or behind enemies, giving both players a better chance, and significantly reducing
-spawn killing. Distance based spawning is also available.
-
 Instructions
 ------------
 Once installed, use dm_spawn_menu to add spawn points for each map.
