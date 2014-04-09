@@ -4,15 +4,15 @@
 #include <sdktools>
 #include <cstrike>
 
-#define VERSION "1.5"
+#define VERSION "1.5.5"
 
 public Plugin:myinfo =
 {
 	name = "Deathmatch",
-	author = "|NA| Snip3r",
+	author = "|NA| Snip3r, Maxximou5",
 	description = "Enables deathmatch style gameplay (respawning, gun selection, spawn protection, etc).",
 	version = VERSION,
-	url = "http://www.noammo.co.uk"
+	url = "http://www.fragworks.net"
 };
 
 enum Teams
@@ -43,6 +43,7 @@ new Handle:mp_teamcashawards;
 new Handle:mp_friendlyfire;
 new Handle:mp_autokick;
 new Handle:mp_tkpunish;
+new Handle:mp_teammates_are_enemies;
 new Handle:ff_damage_reduction_bullets;
 new Handle:ff_damage_reduction_grenade;
 new Handle:ff_damage_reduction_other;
@@ -56,6 +57,7 @@ new backup_mp_teamcashawards;
 new backup_mp_friendlyfire;
 new backup_mp_autokick;
 new backup_mp_tkpunish;
+new backup_mp_teammates_are_enemies;
 new Float:backup_ff_damage_reduction_bullets;
 new Float:backup_ff_damage_reduction_grenade;
 new Float:backup_ff_damage_reduction_other;
@@ -149,8 +151,8 @@ new Handle:primaryMenus[MAXPLAYERS + 1];
 new Handle:secondaryMenus[MAXPLAYERS + 1];
 // Player settings
 new lastEditorSpawnPoint[MAXPLAYERS + 1] = { -1, ... };
-new String:primaryWeapon[MAXPLAYERS + 1][20];
-new String:secondaryWeapon[MAXPLAYERS + 1][20];
+new String:primaryWeapon[MAXPLAYERS + 1][24];
+new String:secondaryWeapon[MAXPLAYERS + 1][24];
 new infoMessageCount[MAXPLAYERS + 1] = { 3, ... };
 new bool:firstWeaponSelection[MAXPLAYERS + 1] = { true, ... };
 new bool:weaponsGivenThisRound[MAXPLAYERS + 1] = { false, ... };
@@ -184,8 +186,8 @@ public OnPluginStart()
 	ammoOffset = FindSendPropOffs("CCSPlayer", "m_iAmmo");
 	ragdollOffset = FindSendPropOffs("CCSPlayer", "m_hRagdoll");
 	// Create arrays to store available weapons loaded by config
-	primaryWeaponsAvailable = CreateArray(20);
-	secondaryWeaponsAvailable = CreateArray(20);
+	primaryWeaponsAvailable = CreateArray(24);
+	secondaryWeaponsAvailable = CreateArray(24);
 	// Create trie to store menu names for weapons
 	BuildWeaponMenuNames();
 	// Create trie to store weapon limits and counts
@@ -201,6 +203,7 @@ public OnPluginStart()
 	mp_friendlyfire = FindConVar("mp_friendlyfire");
 	mp_autokick = FindConVar("mp_autokick");
 	mp_tkpunish = FindConVar("mp_tkpunish");
+	mp_teammates_are_enemies = FindConVar("mp_teammates_are_enemies");
 	ff_damage_reduction_bullets = FindConVar("ff_damage_reduction_bullets");
 	ff_damage_reduction_grenade = FindConVar("ff_damage_reduction_grenade");
 	ff_damage_reduction_other = FindConVar("ff_damage_reduction_other");
@@ -214,6 +217,7 @@ public OnPluginStart()
 	backup_mp_friendlyfire = GetConVarInt(mp_friendlyfire);
 	backup_mp_autokick = GetConVarInt(mp_autokick);
 	backup_mp_tkpunish = GetConVarInt(mp_tkpunish);
+	backup_mp_teammates_are_enemies = GetConVarInt(mp_teammates_are_enemies);
 	backup_ff_damage_reduction_bullets = GetConVarFloat(ff_damage_reduction_bullets);
 	backup_ff_damage_reduction_grenade = GetConVarFloat(ff_damage_reduction_grenade);
 	backup_ff_damage_reduction_other = GetConVarFloat(ff_damage_reduction_other);
@@ -299,7 +303,7 @@ public OnPluginStart()
 	AddNormalSoundHook(Event_Sound);
 	// Create timers
 	CreateTimer(0.5, UpdateSpawnPointStatus, INVALID_HANDLE, TIMER_REPEAT);
-	CreateTimer(1.0, RemoveGroundWeapons, INVALID_HANDLE, TIMER_REPEAT);
+	CreateTimer(10.0, RemoveGroundWeapons, INVALID_HANDLE, TIMER_REPEAT);
 	CreateTimer(10.0, GiveAmmo, INVALID_HANDLE, TIMER_REPEAT);
 }
 
@@ -736,6 +740,7 @@ RestoreGrenadeState()
 
 EnableFFA()
 {
+	SetConVarInt(mp_teammates_are_enemies, 1);
 	SetConVarInt(mp_friendlyfire, 1);
 	SetConVarInt(mp_autokick, 0);
 	SetConVarInt(mp_tkpunish, 0);
@@ -746,6 +751,7 @@ EnableFFA()
 
 DisableFFA()
 {
+	SetConVarInt(mp_teammates_are_enemies, backup_mp_teammates_are_enemies);
 	SetConVarInt(mp_friendlyfire, backup_mp_friendlyfire);
 	SetConVarInt(mp_autokick, backup_mp_autokick);
 	SetConVarInt(mp_tkpunish, backup_mp_tkpunish);
@@ -816,7 +822,7 @@ public Action:Event_Say(clientIndex, const String:command[], arg)
 	if (enabled && (clientIndex != 0) && (Teams:GetClientTeam(clientIndex) > TeamSpectator))
 	{
 		// Retrieve and clean up text.
-		decl String:text[20];
+		decl String:text[24];
 		GetCmdArgString(text, sizeof(text));
 		StripQuotes(text);
 		TrimString(text);
@@ -842,6 +848,7 @@ BuildWeaponMenuNames()
 	// Primary weapons
 	SetTrieString(weaponMenuNames, "weapon_ak47", "AK-47");
 	SetTrieString(weaponMenuNames, "weapon_m4a1", "M4A1");
+	SetTrieString(weaponMenuNames, "weapon_m4a1_silencer", "M4A1-S");
 	SetTrieString(weaponMenuNames, "weapon_sg556", "SG 553");
 	SetTrieString(weaponMenuNames, "weapon_aug", "AUG");
 	SetTrieString(weaponMenuNames, "weapon_galilar", "Galil AR");
@@ -865,6 +872,7 @@ BuildWeaponMenuNames()
 	// Secondary weapons
 	SetTrieString(weaponMenuNames, "weapon_glock", "Glock-18");
 	SetTrieString(weaponMenuNames, "weapon_p250", "P250");
+	SetTrieString(weaponMenuNames, "weapon_usp_silencer", "USP-S");
 	SetTrieString(weaponMenuNames, "weapon_fiveseven", "Five-SeveN");
 	SetTrieString(weaponMenuNames, "weapon_deagle", "Desert Eagle");
 	SetTrieString(weaponMenuNames, "weapon_elite", "Dual Berettas");
@@ -878,13 +886,13 @@ InitialiseWeaponCounts()
 {
 	for (new i = 0; i < GetArraySize(primaryWeaponsAvailable); i++)
 	{
-		decl String:weapon[20];
+		decl String:weapon[24];
 		GetArrayString(primaryWeaponsAvailable, i, weapon, sizeof(weapon));
 		SetTrieValue(weaponCounts, weapon, 0);
 	}
 	for (new i = 0; i < GetArraySize(secondaryWeaponsAvailable); i++)
 	{
-		decl String:weapon[20];
+		decl String:weapon[24];
 		GetArrayString(secondaryWeaponsAvailable, i, weapon, sizeof(weapon));
 		SetTrieValue(weaponCounts, weapon, 0);
 	}
@@ -1044,11 +1052,11 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 			}
 		}
 		// Correct the attacker's score if this was a teamkill.
-		if (ffa)
+		/* if (ffa)
 		{
 			if ((attackerIndex != 0) && (clientIndex != attackerIndex) && (GetClientTeam(clientIndex) == GetClientTeam(attackerIndex)))
 				SetEntProp(attackerIndex, Prop_Data, "m_iFrags", GetClientFrags(attackerIndex) + 2);
-		}
+		} */
 		// Respawn player.
 		if (respawning)
 			CreateTimer(respawnTime, Respawn, clientIndex);
@@ -1062,7 +1070,7 @@ public Action:RemoveRadar(Handle:timer, any:clientIndex)
 
 public Action:GiveAmmo(Handle:timer)
 {
-	static ammoCounts[] = { 0, 35, 90, 90, 200, 30, 120, 32, 100, 52, 100, 1, 1, 1, 1, 1 };
+	static ammoCounts[] = { 0, 90, 90, 90, 90, 200, 90, 120, 90, 100, 90, 100, 90, 1, 1, 1, 1, 1  };
 	
 	if (enabled && replenishAmmo)
 	{
@@ -1131,7 +1139,7 @@ public Menu_Options(Handle:menu, MenuAction:action, param1, param2)
 {
 	if (action == MenuAction_Select)
 	{
-		decl String:info[20];
+		decl String:info[24];
 		GetMenuItem(menu, param2, info, sizeof(info));
 		
 		if (StrEqual(info, "New"))
@@ -1186,7 +1194,7 @@ public Menu_Primary(Handle:menu, MenuAction:action, param1, param2)
 {
 	if (action == MenuAction_Select)
 	{
-		decl String:info[20];
+		decl String:info[24];
 		GetMenuItem(menu, param2, info, sizeof(info));
 		IncrementWeaponCount(info);
 		DecrementWeaponCount(primaryWeapon[param1]);
@@ -1210,7 +1218,7 @@ public Menu_Secondary(Handle:menu, MenuAction:action, param1, param2)
 {
 	if (action == MenuAction_Select)
 	{
-		decl String:info[20];
+		decl String:info[24];
 		GetMenuItem(menu, param2, info, sizeof(info));
 		IncrementWeaponCount(info);
 		DecrementWeaponCount(secondaryWeapon[param1]);
@@ -1257,7 +1265,7 @@ GiveSavedWeapons(clientIndex, bool:primary, bool:secondary)
 			{
 				// Select random menu item (excluding "Random" option)
 				new random = GetRandomInt(0, GetArraySize(primaryWeaponsAvailable) - 2);
-				decl String:randomWeapon[20];
+				decl String:randomWeapon[24];
 				GetArrayString(primaryWeaponsAvailable, random, randomWeapon, sizeof(randomWeapon));
 				GivePlayerItem(clientIndex, randomWeapon);
 			}
@@ -1279,7 +1287,7 @@ GiveSavedWeapons(clientIndex, bool:primary, bool:secondary)
 				{
 					// Select random menu item (excluding "Random" option)
 					new random = GetRandomInt(0, GetArraySize(secondaryWeaponsAvailable) - 2);
-					decl String:randomWeapon[20];
+					decl String:randomWeapon[24];
 					GetArrayString(secondaryWeaponsAvailable, random, randomWeapon, sizeof(randomWeapon));
 					GivePlayerItem(clientIndex, randomWeapon);
 				}
@@ -1333,7 +1341,7 @@ public Action:RemoveGroundWeapons(Handle:timer)
 	if (enabled && removeWeapons)
 	{
 		new maxEntities = GetMaxEntities();
-		decl String:class[20];
+		decl String:class[24];
 		
 		for (new i = MaxClients + 1; i < maxEntities; i++)
 		{
@@ -1358,7 +1366,7 @@ public Action:RemoveGroundWeapons(Handle:timer)
 SetBuyZones(const String:status[])
 {
 	new maxEntities = GetMaxEntities();
-	decl String:class[20];
+	decl String:class[24];
 	
 	for (new i = MaxClients + 1; i < maxEntities; i++)
 	{
@@ -1374,7 +1382,7 @@ SetBuyZones(const String:status[])
 SetObjectives(const String:status[])
 {
 	new maxEntities = GetMaxEntities();
-	decl String:class[20];
+	decl String:class[24];
 	
 	for (new i = MaxClients + 1; i < maxEntities; i++)
 	{
@@ -1403,7 +1411,7 @@ bool:StripC4(clientIndex)
 		new c4Index = GetPlayerWeaponSlot(clientIndex, _:SlotC4);
 		if (c4Index != -1)
 		{
-			decl String:weapon[20];
+			decl String:weapon[24];
 			GetClientWeapon(clientIndex, weapon, sizeof(weapon));
 			// If the player is holding C4, switch to the best weapon before removing it.
 			if (StrEqual(weapon, "weapon_c4"))
@@ -1427,7 +1435,7 @@ bool:StripC4(clientIndex)
 RemoveHostages()
 {
 	new maxEntities = GetMaxEntities();
-	decl String:class[20];
+	decl String:class[24];
 	
 	for (new i = MaxClients + 1; i < maxEntities; i++)
 	{
@@ -1482,7 +1490,7 @@ Handle:BuildSpawnEditorMenu()
 	new Handle:menu = CreateMenu(Menu_SpawnEditor);
 	SetMenuTitle(menu, "Spawn Point Editor:");
 	SetMenuExitButton(menu, true);
-	decl String:editModeItem[20];
+	decl String:editModeItem[24];
 	Format(editModeItem, sizeof(editModeItem), "%s Edit Mode", (!inEditMode) ? "Enable" : "Disable");
 	AddMenuItem(menu, "Edit", editModeItem);
 	AddMenuItem(menu, "Nearest", "Teleport to nearest");
@@ -1505,7 +1513,7 @@ public Menu_SpawnEditor(Handle:menu, MenuAction:action, param1, param2)
 {
 	if (action == MenuAction_Select)
 	{
-		decl String:info[20];
+		decl String:info[24];
 		GetMenuItem(menu, param2, info, sizeof(info));
 		
 		if (StrEqual(info, "Edit"))
@@ -1999,15 +2007,15 @@ BuildDisplayWeaponMenu(clientIndex, bool:primary)
 	
 	new Handle:weapons = (primary) ? primaryWeaponsAvailable : secondaryWeaponsAvailable;
 	
-	decl String:currentWeapon[20];
+	decl String:currentWeapon[24];
 	currentWeapon = (primary) ? primaryWeapon[clientIndex] : secondaryWeapon[clientIndex];
 	
 	for (new i = 0; i < GetArraySize(weapons); i++)
 	{
-		decl String:weapon[20];
+		decl String:weapon[24];
 		GetArrayString(weapons, i, weapon, sizeof(weapon));
 		
-		decl String:weaponMenuName[20];
+		decl String:weaponMenuName[24];
 		GetTrieString(weaponMenuNames, weapon, weaponMenuName, sizeof(weaponMenuName));
 		
 		new weaponCount;
@@ -2069,7 +2077,10 @@ public Action:Event_TextMsg(UserMsg:msg_id, Handle:bf, const players[], playersN
 	if (ffa)
 	{
 		decl String:text[64];
-		BfReadString(bf, text, sizeof(text));
+		if(GetUserMessageType() == UM_Protobuf)
+			PbReadString(bf, "params", text, sizeof(text), 0);
+		else
+			BfReadString(bf, text, sizeof(text));
 		
 		if (StrContains(text, "#SFUI_Notice_Killed_Teammate") != -1)
 			return Plugin_Handled;
@@ -2088,7 +2099,10 @@ public Action:Event_HintText(UserMsg:msg_id, Handle:bf, const players[], players
 	if (ffa)
 	{
 		decl String:text[64];
-		BfReadString(bf, text, sizeof(text));
+		if(GetUserMessageType() == UM_Protobuf)
+			PbReadString(bf, "text", text, sizeof(text));
+		else
+			BfReadString(bf, text, sizeof(text));
 	
 		if (StrContains(text, "#SFUI_Notice_Hint_careful_around_teammates") != -1)
 			return Plugin_Handled;
@@ -2110,11 +2124,25 @@ public Action:Event_RadioText(UserMsg:msg_id, Handle:bf, const players[], player
 	if (!displayGrenadeMessages)
 	{
 		decl String:text[64];
-		BfReadString(bf, text, sizeof(text));
-		if (StrContains(text, "#Game_radio_location") != -1)
+		if(GetUserMessageType() == UM_Protobuf)
+		{
+			PbReadString(bf, "msg_name", text, sizeof(text));
+			// 0: name
+			// 1: msg_name == #Game_radio_location ? location : translation phrase
+			// 2: if msg_name == #Game_radio_location : translation phrase
+			if (StrContains(text, "#Game_radio_location") != -1)
+				PbReadString(bf, "params", text, sizeof(text), 2);
+			else
+				PbReadString(bf, "params", text, sizeof(text), 1);
+		}
+		else
+		{
 			BfReadString(bf, text, sizeof(text));
-		BfReadString(bf, text, sizeof(text));
-		BfReadString(bf, text, sizeof(text));
+			if (StrContains(text, "#Game_radio_location") != -1)
+				BfReadString(bf, text, sizeof(text));
+			BfReadString(bf, text, sizeof(text));
+			BfReadString(bf, text, sizeof(text));
+	}
 		
 		for (new i = 0; i < sizeof(grenadeTriggers); i++)
 		{

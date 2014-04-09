@@ -10,3 +10,4 @@ TODO
 * Change from timer based weapon removal to removal on death (preferably without sdkhooks).
 * Add HP per kill assist option (dm_hp_kill_assist).
 * Update de_nuke and de_nuke_se spawn point files.
+* Add in the ability to receive grenade after successful kill
