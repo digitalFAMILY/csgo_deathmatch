@@ -4,15 +4,15 @@
 #include <sdktools>
 #include <cstrike>
 
-#define VERSION "1.5.5"
+#define VERSION "1.5.6-dev"
 
 public Plugin:myinfo =
 {
 	name = "Deathmatch",
-	author = "|NA| Snip3r, Maxximou5",
+	author = "|NA| Snip3r, Maxximou5, Jokey",
 	description = "Enables deathmatch style gameplay (respawning, gun selection, spawn protection, etc).",
 	version = VERSION,
-	url = "http://www.fragworks.net"
+	url = "https://github.com/digitalFAMILY/csgo_deathmatch"
 };
 
 enum Teams
@@ -872,6 +872,7 @@ BuildWeaponMenuNames()
 	// Secondary weapons
 	SetTrieString(weaponMenuNames, "weapon_glock", "Glock-18");
 	SetTrieString(weaponMenuNames, "weapon_p250", "P250");
+	SetTrieString(weaponMenuNames, "weapon_cz75a", "CZ-75");
 	SetTrieString(weaponMenuNames, "weapon_usp_silencer", "USP-S");
 	SetTrieString(weaponMenuNames, "weapon_fiveseven", "Five-SeveN");
 	SetTrieString(weaponMenuNames, "weapon_deagle", "Desert Eagle");
